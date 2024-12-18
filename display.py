@@ -35,12 +35,10 @@ while(run):
 
 
     screen.blit(surface1,(0,0))
-    x = 0
-    y = 0
-    x = (keys[pygame.K_d] - keys[pygame.K_a]) * speed_scale
-    y = (keys[pygame.K_s] - keys[pygame.K_w]) * speed_scale
 
-    mybone.move((x,y))
+    if keys[pygame.K_d] == 1: mybone.rotate("right")
+    if keys[pygame.K_a] == 1: mybone.rotate("left")
+    if keys[pygame.K_w] == 1: mybone.move(speed_scale)
     mybone.draw_circle(screen, False)
     pygame.display.update()
     clock.tick(60)
