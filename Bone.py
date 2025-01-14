@@ -12,6 +12,7 @@ class Bone():
         self.parent = None
         self.angle = 0 #angle
         self.speed = speed
+        self.flex = math.radians(50)
 
 
     def add_child(self,radius):
@@ -62,10 +63,10 @@ class Bone():
         rights = []
         lefts = []
         run = True
-        face =  self.get_face()
-        lefts.append(face[0])
-        rights.append(face[1])
-        rights.append(face[2])
+        # face =  self.get_face()
+        # lefts.append(face[0])
+        # rights.append(face[1])
+        # rights.append(face[2])
         while(run):
             points = trav_bone.get_sides()
             rights.append(points[0])
@@ -78,18 +79,49 @@ class Bone():
             lefts.reverse()
             return self.smooth(rights+lefts)
     def smooth(self, border):
-        # x = []
-        # y = []
-        # border = sorted(border, key=lambda p: p[0])
-        # x, y = zip(*border)
-        # cs = CubicSpline(x,y, bc_type="natural")
-        # x_new = np.linspace(min(x),max(x),len(x) * 10)
-        # y_new = cs(x_new)
-        # new_border = []
-        # for x,y in zip(x_new, y_new):
-        #     new_border.append((x,y))
-        # return new_border
-        return border
+        if not border or len(border) < 4:
+            print("Error: Border must have at least 4 points.")
+            return border
+
+        # Split and sort into right and left sides
+        n = len(border) // 2
+        right_side = sorted(border[:n], key=lambda p: p[0])  # Sort right by x
+        left_side = sorted(border[n:], key=lambda p: p[0])   # Sort left by x
+
+        # Remove duplicates
+        right_side = self.remove_duplicate_x(right_side)
+        left_side = self.remove_duplicate_x(left_side)
+
+        if len(right_side) < 4 or len(left_side) < 4:
+            print("Error: Insufficient unique points for smoothing.")
+            return border
+
+        try:
+            # Extract x and y for both sides
+            x_right, y_right = zip(*right_side)
+            x_left, y_left = zip(*left_side)
+    
+            # Perform cubic spline interpolation
+            cs_right = CubicSpline(x_right, y_right, bc_type="natural")
+            cs_left = CubicSpline(x_left, y_left, bc_type="natural")
+
+            # Generate interpolated points
+            x_new_right = np.linspace(min(x_right), max(x_right), 100)
+            x_new_left = np.linspace(min(x_left), max(x_left), 100)
+
+            y_new_right = cs_right(x_new_right)
+            y_new_left = cs_left(x_new_left)
+
+            # Combine smoothed sides
+            smoothed_border = list(zip(x_new_right, y_new_right)) + list(zip(x_new_left, y_new_left))[::-1]
+            return smoothed_border
+        except Exception as e:
+            print(f"Spline interpolation error: {e}")
+            return border
+
+
+
+
     def get_sides(self):
         right = (self.center[0] + (self.radius * math.cos(self.angle - math.radians(90))), self.center[1] + (self.radius * math.sin(self.angle - math.radians(90))))
         left =  (self.center[0] + (self.radius * math.cos(self.angle + math.radians(90))), self.center[1] + (self.radius * math.sin(self.angle + math.radians(90))))
@@ -101,6 +133,18 @@ class Bone():
         c =  (self.center[0] + (self.radius * math.cos(self.angle + math.radians(45))), self.center[1] + (self.radius * math.sin(self.angle + math.radians(45))))
         return c,b,a
     def rotate(self, direction):
+        
         if direction == "right":
             self.angle += math.radians(5)
         else:self.angle -= math.radians(5)
+    def remove_duplicate_x(self, points):
+        unique_x = {}
+        for x, y in points:
+            if x in unique_x:
+                unique_x[x].append(y)  # Store all y-values for a given x
+            else:
+                unique_x[x] = [y]
+
+        # Average y-values for each unique x
+        averaged_points = [(x, sum(ys) / len(ys)) for x, ys in unique_x.items()]
+        return sorted(averaged_points, key=lambda p: p[0])  # Ensure sorted order by x

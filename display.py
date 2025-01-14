@@ -2,19 +2,19 @@ import pygame
 from Bone import Bone
 from sys import exit
 pygame.init()
-screen = pygame.display.set_mode((1800,900))
+screen = pygame.display.set_mode((1000,500))
 pygame.display.set_caption('Test')
 clock = pygame.time.Clock()
 
 surface1 = pygame.Surface((1800,900))
 surface1.fill('green')
 
-mybone = Bone(52, (100,100))
+mybone = Bone(52/2, (100,100))
 children_size = [58, 40, 60, 68, 71, 65, 50, 28, 15, 11, 9, 7, 7]
 body = [mybone]
 current = mybone
 for rad in children_size:
-    current = current.add_child(rad)
+    current = current.add_child(rad/2)
     body.append(current)
 # mybone.add_child(30).add_child(35).add_child(28).add_child(20).add_child(20)
 print(mybone.center)
@@ -39,6 +39,6 @@ while(run):
     if keys[pygame.K_d] == 1: mybone.rotate("right")
     if keys[pygame.K_a] == 1: mybone.rotate("left")
     if keys[pygame.K_w] == 1: mybone.move(speed_scale)
-    mybone.draw_circle(screen, False)
+    mybone.draw_circle(screen, True)
     pygame.display.update()
     clock.tick(60)
